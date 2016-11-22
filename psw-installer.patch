@@ -1,8 +1,4 @@
-36c36
-<     exit 4
+41c41
+<         exit 4
 ---
-> #    exit 4
-83c83
-<     exit 1
----
-> #    exit 1
+> #        exit 4
