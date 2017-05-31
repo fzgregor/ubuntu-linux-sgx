@@ -1,7 +1,12 @@
 build-image:
     stage: build
     tags:
-      - isgx-docker-available
+      - docker-runner
+      - isgx-docker-sock
+    image: ubuntu:16.04
+    before_script:
+      - apt-get update
+      - apt-get install -y --no-install-recommends docker.io
     script:
       - IMAGE_ID=`docker build -q .`
       - echo $IMAGE_ID | tee image
@@ -12,7 +17,12 @@ build-image:
 test-samples:
     stage: test
     tags:
-      - isgx-docker-available
+      - docker-runner
+      - isgx-docker-sock
+    image: ubuntu:16.04
+    before_script:
+      - apt-get update
+      - apt-get install -y --no-install-recommends docker.io
     script:
       - IMAGE_ID=`cat image`
       - script='
@@ -38,7 +48,12 @@ test-samples:
 deploy-to-securecloud:
     stage: deploy
     tags:
-      - isgx-docker-available
+      - docker-runner
+      - isgx-docker-sock
+    image: ubuntu:16.04
+    before_script:
+      - apt-get update
+      - apt-get install -y --no-recommendations docker.io
     only:
       - tags
     script:
