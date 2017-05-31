@@ -1,0 +1,51 @@
+build-image:
+    stage: build
+    tags:
+      - isgx-docker-available
+    script:
+      - IMAGE_ID=`docker build -q .`
+      - echo $IMAGE_ID | tee image
+    artifacts:
+      paths:
+        - image
+
+test-samples:
+    stage: test
+    tags:
+      - isgx-docker-available
+    script:
+      - IMAGE_ID=`cat image`
+      - script='
+          set +x;
+          set +e;
+          cd /sgxsdk/SampleCode/SampleEnclave;
+          make;
+          output=`echo "" | ./app`;
+          echo "$output";
+          echo $output | grep Error && exit 1 || true;
+          cd /sgxsdk/SampleCode/LocalAttestation;
+          make;
+          output=`echo "" | ./app`;
+          echo "$output";
+          echo $output | grep Error && exit 1 || true;
+          cd /sgxsdk/SampleCode/RemoteAttestation;
+          make;
+          output=`echo "" | ./app`;
+          echo "$output";
+          echo $output | grep Error && exit 1 || true;'
+      - docker run -i --rm ${IMAGE_ID} bash -c "source /sgxsdk/environment; ${script}"
+
+deploy-to-securecloud:
+    stage: deploy
+    tags:
+      - isgx-docker-available
+    only:
+      - tags
+    script:
+      - IMAGE_ID=`cat image`
+      - TAG=`git describe --tags`
+      - NAME="docker.securecloud.works/ubuntu-intel-sdk:${TAG}"
+      - docker tag $IMAGE_ID $NAME
+      - docker login docker.securecloud.works -u $SECURECLOUD_REGISTRY_USER -p $SECURECLOUD_REGISTRY_PASSWORD
+      - docker push $NAME
+      - docker logout docker.securecloud.works
